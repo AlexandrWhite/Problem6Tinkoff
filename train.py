@@ -2,6 +2,8 @@ import argparse
 import sys
 import pickle
 import re
+import os
+import random as rnd
 
 parser = argparse.ArgumentParser()
 
@@ -10,7 +12,7 @@ parser.add_argument("--input-dir")
 
 args = parser.parse_args()
 
-data_source = sys.stdin if args.input_dir is None else open(args.input_dir)
+# data_source = sys.stdin if args.input_dir is None else os.listdir(args.input_dir)
 model = {}
 
 
@@ -25,8 +27,8 @@ def create_ngram(data, n):
                 yield ' '.join(tokens[i:i + n]), tokens[i + n] if i + n < len(tokens) else 'ENDWORD'
 
 
-def train_model():
-    for ngram, next_word in create_ngram(data_source, 2):
+def train_model(data):
+    for ngram, next_word in create_ngram(data, 2):
         if ngram not in model.keys():
             model[ngram] = {next_word: 1}
         else:
@@ -36,6 +38,25 @@ def train_model():
                 model[ngram][next_word] += 1
 
 
-train_model()
+def save_model():
+    with open(args.model, 'wb') as f:
+        pickle.dump(model, f)
+
+
+def generate():
+    start = rnd.choice(list(model.items()))
+    print(start)
+
+
+if args.input_dir is None:
+    train_model(sys.stdin)
+else:
+    for file in os.listdir(args.input_dir):
+        with open(args.input_dir + '\\' + file, 'r') as f:
+            train_model(f)
+
+# save_model()
+generate()
+
 for key, value in model.items():
     print(key, value)
